@@ -22,6 +22,12 @@ PREFERRED_STAT_KEYS = [
     "fouls-committed",
     "shots",
     "shots-on-target",
+    "goals",
+    "assists",
+    "scored-or-assisted",
+    "total-passes",
+    "yellow-cards",
+    "dispossessed",
 ]
 PREFERRED_STAT_TO_INTERNAL = {
     key: CLI_STAT_MAPPING[key] for key in PREFERRED_STAT_KEYS if key in CLI_STAT_MAPPING
@@ -53,6 +59,12 @@ def _choose_stats(defaults: list[str] | None) -> list[str] | None:
         ("Fouls Committed", "fouls-committed"),
         ("Shots", "shots"),
         ("Shots on Target", "shots-on-target"),
+        ("Goals", "goals"),
+        ("Assists", "assists"),
+        ("Scored or Assisted", "scored-or-assisted"),
+        ("Total Passes", "total-passes"),
+        ("Yellow Cards", "yellow-cards"),
+        ("Dispossessed", "dispossessed"),
     ]
     if not defaults:
         defaults = None
