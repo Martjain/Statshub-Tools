@@ -90,7 +90,8 @@ During collection, the terminal shows a spinner instead of per-position logs, th
 - Output format: terminal/json/csv/both (+ optional path)
 - Optional filter by team name
 - Sort matches: site order, alphabetical, kickoff time
-- How many matches: all, pick 1, or pick N
+- How many matches: all, pick 1, or pick N (checkbox selection)
+- When picking N, the CLI prints the match list and requires selecting exactly N matches
 - Final confirmation with selected matches
 
 ### Collect Specific Stats

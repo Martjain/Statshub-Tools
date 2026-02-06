@@ -167,9 +167,15 @@ def _extract_tabs(match_url: str, headless: bool) -> tuple[str, str]:
             if not match_url.startswith("http"):
                 match_url = "https://www.statshub.com" + match_url
             page.goto(match_url)
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=15000)
+            except Exception:
+                page.wait_for_timeout(1500)
             page.get_by_role("button", name="Opponent Stats NEW!").click()
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=15000)
+            except Exception:
+                page.wait_for_timeout(1500)
 
             tabs = page.locator('[role="tab"]').all()
             tab_names = []
@@ -398,7 +404,30 @@ def main() -> None:
                 n = max(1, int(n_raw))
             except ValueError:
                 n = 5
-            chosen_matches = matches[:n]
+            if n > len(matches):
+                n = len(matches)
+            choices = []
+            for m in matches:
+                label = f"{m.get('home_name')} vs {m.get('away_name')}"
+                choices.append(questionary.Choice(label, m))
+            print("Available matches:")
+            for c in choices:
+                print(f"- {c.title}")
+            default_sel = None
+            while True:
+                selected = questionary.checkbox(
+                    f"Select {n} matches:",
+                    choices=choices,
+                    default=default_sel,
+                ).ask()
+                if not selected:
+                    print("No matches selected.")
+                    return
+                if len(selected) != n:
+                    print(f"Please select exactly {n} matches.")
+                    continue
+                chosen_matches = selected
+                break
 
     if args.dry_run:
         print(
