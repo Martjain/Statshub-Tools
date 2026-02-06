@@ -332,7 +332,3 @@ Real Sociedad,Tackles,RB,26,2.0,4,False
 ## License
 
 This project is provided as-is for personal use.
-
-## Questions or Issues?
-
-Check the debug artifacts (HTML/PNG) generated with `--debug` flag or review the console output for detailed error messages.

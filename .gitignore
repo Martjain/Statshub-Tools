@@ -7,5 +7,6 @@ bot-sh/debug_isolated.py
 bot-sh/debug_*.html
 bot-sh/debug_*.png
 *.log
+CLICKABILITY_REPORT.md
 .python-version
 .DS_Store
