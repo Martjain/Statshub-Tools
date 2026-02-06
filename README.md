@@ -108,6 +108,12 @@ python3 bot-sh/codegen.py --headless --stats tackles,fouls-committed
 - `fouls-won` → "Fouls Won"
 - `shots` → "Shots"
 - `shots-on-target` → "Shots on Target"
+- `goals` → "Goals"
+- `assists` → "Assists"
+- `scored-or-assisted` → "Scored or Assisted"
+- `total-passes` → "Total Passes"
+- `yellow-cards` → "Yellow Cards"
+- `dispossessed` → "Dispossessed"
 
 ### Filter Results by Average
 

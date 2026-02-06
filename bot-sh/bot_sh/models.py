@@ -44,6 +44,12 @@ STAT_DISPLAY_NAMES = {
     "wasFouled": "Fouls Won",
     "shots": "Shots",
     "onTargetScoringAttempt": "Shots on Target",
+    "goals": "Goals",
+    "goalAssist": "Assists",
+    "scoredOrAssisted": "Scored or Assisted",
+    "totalPass": "Total Passes",
+    "yellowCard": "Yellow Cards",
+    "dispossessed": "Dispossessed",
 }
 
 
@@ -53,9 +59,18 @@ CLI_STAT_MAPPING = {
     "fouls-committed": "fouls",
     "shots": "shots",
     "shots-on-target": "onTargetScoringAttempt",
+    "goals": "goals",
+    "assists": "goalAssist",
+    "scored-or-assisted": "scoredOrAssisted",
+    "total-passes": "totalPass",
+    "yellow-cards": "yellowCard",
+    "dispossessed": "dispossessed",
     "fouls_won": "wasFouled",
     "fouls_committed": "fouls",
     "shots_on_target": "onTargetScoringAttempt",
+    "scored_or_assisted": "scoredOrAssisted",
+    "total_passes": "totalPass",
+    "yellow_cards": "yellowCard",
 }
 
 
