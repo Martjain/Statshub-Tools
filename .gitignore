@@ -1,0 +1,7 @@
+bot-sh/venv/
+bot-sh/__pycache__/
+bot-sh/**/__pycache__/
+bot-sh/**/*.pyc
+bot-sh/.interactive_prefs.json
+.python-version
+.DS_Store
