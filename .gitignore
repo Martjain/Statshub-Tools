@@ -3,5 +3,9 @@ bot-sh/__pycache__/
 bot-sh/**/__pycache__/
 bot-sh/**/*.pyc
 bot-sh/.interactive_prefs.json
+bot-sh/debug_isolated.py
+bot-sh/debug_*.html
+bot-sh/debug_*.png
+*.log
 .python-version
 .DS_Store
