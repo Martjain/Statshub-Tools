@@ -1,10 +1,11 @@
 # StatsHub Automation Tool
 
-A Python-based Playwright automation tool for collecting per-position football statistics from StatsHub. Gathers Total, Average, and Highest values for multiple stats across all player positions.
+A Python-based Playwright automation tool for collecting per-position opponent football statistics from StatsHub. Gathers Total, Average, and Highest values for multiple stats across all player positions.
 
 ## Features
 
 - **Automated Data Collection**: Navigate StatsHub UI and extract stats programmatically
+- **Opponent Stats Focus**: Collects opponent-team position stats for each selected team tab
 - **Multi-Stat Support**: Collect multiple statistics (Tackles, Fouls, Shots, etc.) in a single run
 - **Position-Level Granularity**: Toggle each position individually and extract position-specific stats
 - **Flexible Filtering**: Filter results by minimum average value
@@ -81,9 +82,11 @@ Interactive options include filtering matches by team name, sorting (including k
 The interactive CLI also saves your last selections to `bot-sh/.interactive_prefs.json` and uses them as defaults next time.
 
 During collection, the terminal shows a spinner instead of per-position logs, then prints a final summary. The summary is sorted by average (descending) for each stat.
+The final team summaries are shown in opponent view: each team row reflects stats conceded to opponents (home and away tab data are mapped vice versa).
 
 **Interactive CLI flow (prompts):**
 - Match date: `Today` or `Tomorrow`
+- Confirmed lineups: yes/no (if yes, enter lineup name for home and away; `GK` is auto-included)
 - Stats to collect: multi-select
 - Minimum average: numeric threshold
 - Run headless: yes/no
@@ -177,6 +180,8 @@ python3 bot-sh/codegen.py --headless \
 - `--match`: The match link text (e.g., "14:00 Deportivo Alavés", "16:00 Barcelona")
 - `--home-team`: First team tab name (e.g., "Deportivo Alavés Deportivo")
 - `--away-team`: Second team tab name (e.g., "Real Sociedad Real Sociedad")
+
+Note: output is opponent stats. Summary rows are mapped to opponent view (team A summary uses team B tab data, and vice versa).
 
 ### Collect All Stats
 
