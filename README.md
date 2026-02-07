@@ -20,7 +20,7 @@ A Python-based Playwright automation tool for collecting per-position opponent f
 1. **Clone or navigate to the project directory:**
 
    ```bash
-   cd /home/martinesfer/Downloads/Workspace/automate_statshub/bot-sh
+   cd bot-sh
    ```
 
 2. **Set up a Python virtual environment (optional but recommended):**

@@ -118,10 +118,19 @@ def _discover_matches(date_filter: str, headless: bool) -> list[dict]:
         page = context.new_page()
         try:
             page.goto("https://www.statshub.com/")
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=8000)
+            except Exception:
+                # Some pages keep long-polling requests open; continue after a short settle delay.
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+                page.wait_for_timeout(1200)
             label = date_filter.capitalize()
             page.get_by_text(label, exact=True).click()
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=8000)
+            except Exception:
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+                page.wait_for_timeout(1200)
 
             links = page.locator('a[href*="/fixture/"]').all()
             seen = set()
