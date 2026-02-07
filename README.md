@@ -36,8 +36,6 @@ A Python-based Playwright automation tool for collecting per-position opponent f
    playwright install
    ```
 
-Note: The `bot-sh/venv` directory is not tracked in git. If it goes missing, recreate it with the steps above.
-
 ## Project Structure
 
 ```
