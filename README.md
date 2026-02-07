@@ -97,6 +97,15 @@ The final team summaries are shown in opponent view: each team row reflects stat
 - When picking N, the CLI prints the match list and requires selecting exactly N matches
 - Final confirmation with selected matches
 
+**Confirmed lineup input format:**
+- Enter the lineup as a single formation string (example: `4-2-3-1`).
+- Do not enter positions manually in the prompt; only the lineup name is required.
+- Supported lineup names:
+  `3-4-3`, `3-4-1-2`, `3-4-2-1`, `3-5-2`, `3-1-4-2`, `3-5-1-1`,
+  `4-3-3`, `4-1-4-1`, `4-2-2-2`, `4-4-2`, `4-2-3-1`, `4-3-2-1`,
+  `4-1-3-2`, `5-3-2`, `5-4-1`.
+- `GK` is automatically included for every lineup.
+
 ### Collect Specific Stats
 
 Collect only "Tackles" and "Fouls Committed":
