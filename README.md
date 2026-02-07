@@ -1,10 +1,11 @@
 # StatsHub Automation Tool
 
-A Python-based Playwright automation tool for collecting per-position football statistics from StatsHub. Gathers Total, Average, and Highest values for multiple stats across all player positions.
+A Python-based Playwright automation tool for collecting per-position opponent football statistics from StatsHub. Gathers Total, Average, and Highest values for multiple stats across all player positions.
 
 ## Features
 
 - **Automated Data Collection**: Navigate StatsHub UI and extract stats programmatically
+- **Opponent Stats Focus**: Collects opponent-team position stats for each selected team tab
 - **Multi-Stat Support**: Collect multiple statistics (Tackles, Fouls, Shots, etc.) in a single run
 - **Position-Level Granularity**: Toggle each position individually and extract position-specific stats
 - **Flexible Filtering**: Filter results by minimum average value
@@ -19,7 +20,7 @@ A Python-based Playwright automation tool for collecting per-position football s
 1. **Clone or navigate to the project directory:**
 
    ```bash
-   cd /home/martinesfer/Downloads/Workspace/automate_statshub/bot-sh
+   cd bot-sh
    ```
 
 2. **Set up a Python virtual environment (optional but recommended):**
@@ -34,25 +35,6 @@ A Python-based Playwright automation tool for collecting per-position football s
    pip install playwright questionary
    playwright install
    ```
-
-Note: The `bot-sh/venv` directory is not tracked in git. If it goes missing, recreate it with the steps above.
-
-## Project Structure
-
-```
-bot-sh/
-├── codegen.py              # CLI wrapper (parses arguments and invokes bot_sh.cli)
-├── interactive.py          # Rich interactive CLI
-├── batch_collector.py      # Batch runner (team_tabs.json)
-├── batch_simple.py         # Config-based batch runner (matches.json)
-├── bot_sh/
-│   ├── __init__.py         # Package init
-│   ├── cli.py              # CLI parsing and orchestration
-│   ├── scraper.py          # Playwright navigation and extraction
-│   ├── outputs.py          # JSON/CSV writers and helpers
-│   ├── models.py           # Constants and mappings
-└── venv/                   # Virtual environment
-```
 
 ## Usage
 
@@ -81,9 +63,11 @@ Interactive options include filtering matches by team name, sorting (including k
 The interactive CLI also saves your last selections to `bot-sh/.interactive_prefs.json` and uses them as defaults next time.
 
 During collection, the terminal shows a spinner instead of per-position logs, then prints a final summary. The summary is sorted by average (descending) for each stat.
+The final team summaries are shown in opponent view: each team row reflects stats conceded to opponents (home and away tab data are mapped vice versa).
 
 **Interactive CLI flow (prompts):**
 - Match date: `Today` or `Tomorrow`
+- Confirmed lineups: yes/no (if yes, enter lineup name for home and away; `GK` is auto-included)
 - Stats to collect: multi-select
 - Minimum average: numeric threshold
 - Run headless: yes/no
@@ -93,6 +77,15 @@ During collection, the terminal shows a spinner instead of per-position logs, th
 - How many matches: all, pick 1, or pick N (checkbox selection)
 - When picking N, the CLI prints the match list and requires selecting exactly N matches
 - Final confirmation with selected matches
+
+**Confirmed lineup input format:**
+- Enter the lineup as a single formation string (example: `4-2-3-1`).
+- Do not enter positions manually in the prompt; only the lineup name is required.
+- Supported lineup names:
+  `3-4-3`, `3-4-1-2`, `3-4-2-1`, `3-5-2`, `3-1-4-2`, `3-5-1-1`,
+  `4-3-3`, `4-1-4-1`, `4-2-2-2`, `4-4-2`, `4-2-3-1`, `4-3-2-1`,
+  `4-1-3-2`, `5-3-2`, `5-4-1`.
+- `GK` is automatically included for every lineup.
 
 ### Collect Specific Stats
 
@@ -177,6 +170,8 @@ python3 bot-sh/codegen.py --headless \
 - `--match`: The match link text (e.g., "14:00 Deportivo Alavés", "16:00 Barcelona")
 - `--home-team`: First team tab name (e.g., "Deportivo Alavés Deportivo")
 - `--away-team`: Second team tab name (e.g., "Real Sociedad Real Sociedad")
+
+Note: output is opponent stats. Summary rows are mapped to opponent view (team A summary uses team B tab data, and vice versa).
 
 ### Collect All Stats
 

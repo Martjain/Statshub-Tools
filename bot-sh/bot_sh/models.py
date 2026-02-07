@@ -28,6 +28,64 @@ POSITIONS = [
     "LST",
 ]
 
+LINEUP_POSITIONS = {
+    "3-4-3": ["LCB", "CB", "RCB", "RWB", "RCM", "LCM", "LWB", "RW", "ST", "LW"],
+    "3-4-1-2": [
+        "RCB",
+        "CB",
+        "LCB",
+        "RWB",
+        "RCDM",
+        "LCDM",
+        "LWB",
+        "CAM",
+        "RST",
+        "LST",
+    ],
+    "3-4-2-1": ["RCB", "CB", "LCB", "RWB", "RCM", "LCM", "LWB", "RF", "LF", "ST"],
+    "3-5-2": ["RCB", "CB", "LCB", "RWB", "RCM", "CM", "LCM", "LWB", "RST", "LST"],
+    "3-1-4-2": ["RCB", "CB", "LCB", "CDM", "RWB", "RCM", "LCM", "LWB", "RST", "LST"],
+    "3-5-1-1": ["RCB", "CB", "LCB", "RWB", "RCDM", "CM", "LCDM", "LWB", "CF", "ST"],
+    "4-3-3": ["RB", "CB", "CB", "LB", "RCM", "CM", "LCM", "RW", "ST", "LW"],
+    "4-1-4-1": ["RB", "RCB", "LCB", "LB", "CDM", "RM", "RCM", "LCM", "LM", "ST"],
+    "4-2-2-2": ["RB", "RCB", "LCB", "LB", "RCDM", "LCDM", "RCAM", "LCAM", "RST", "LST"],
+    "4-4-2": ["RB", "RCB", "LCB", "LB", "RM", "RCM", "LCM", "LM", "RST", "LST"],
+    "4-2-3-1": ["RB", "RCB", "LCB", "LB", "RCDM", "LCDM", "RW", "CAM", "LW", "ST"],
+    "4-3-2-1": ["RB", "RCB", "LCB", "LB", "RCM", "CM", "LCM", "CAM", "RST", "LST"],
+    "4-1-3-2": ["RB", "RCB", "LCB", "LB", "CDM", "RM", "CM", "LM", "RST", "LST"],
+    "5-3-2": ["RWB", "RCB", "CB", "LCB", "LWB", "RCM", "CM", "LCM", "RST", "LST"],
+    "5-4-1": ["RWB", "RCB", "CB", "LCB", "LWB", "RM", "RCM", "LCM", "LM", "ST"],
+}
+
+
+def normalize_lineup_name(lineup_name: str) -> str:
+    return "-".join(lineup_name.strip().lower().split())
+
+
+def get_lineup_positions(lineup_name: str) -> list[str] | None:
+    normalized = normalize_lineup_name(lineup_name)
+    positions = LINEUP_POSITIONS.get(normalized)
+    if not positions:
+        return None
+    return ["GK", *positions]
+
+
+def _validate_lineups() -> None:
+    allowed_lineup_positions = set(POSITIONS) | {"CF", "RCAM", "LCAM"}
+    for lineup, positions in LINEUP_POSITIONS.items():
+        if len(positions) != 10:
+            raise ValueError(
+                f"Lineup '{lineup}' must have exactly 10 outfield positions, got {len(positions)}."
+            )
+        for pos in positions:
+            if pos not in allowed_lineup_positions:
+                raise ValueError(
+                    f"Lineup '{lineup}' includes unsupported position '{pos}'."
+                )
+
+
+_validate_lineups()
+
 
 DEFAULT_STATS = [
     "wasFouled",

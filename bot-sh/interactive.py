@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -11,7 +12,7 @@ from pathlib import Path
 import questionary
 
 from bot_sh import cli
-from bot_sh.models import CLI_STAT_MAPPING
+from bot_sh.models import CLI_STAT_MAPPING, LINEUP_POSITIONS, get_lineup_positions
 from playwright.sync_api import sync_playwright
 
 
@@ -66,12 +67,18 @@ def _choose_stats(defaults: list[str] | None) -> list[str] | None:
         ("Yellow Cards", "yellow-cards"),
         ("Dispossessed", "dispossessed"),
     ]
-    if not defaults:
-        defaults = None
+    default_values = set(defaults or [])
+    choice_items = [
+        questionary.Choice(
+            title=title,
+            value=value,
+            checked=(value in default_values),
+        )
+        for title, value in options
+    ]
     selected = questionary.checkbox(
         "Select stats to collect (space to toggle):",
-        choices=[questionary.Choice(title=title, value=value) for title, value in options],
-        default=defaults,
+        choices=choice_items,
     ).ask()
     if not selected:
         return None
@@ -111,10 +118,19 @@ def _discover_matches(date_filter: str, headless: bool) -> list[dict]:
         page = context.new_page()
         try:
             page.goto("https://www.statshub.com/")
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=8000)
+            except Exception:
+                # Some pages keep long-polling requests open; continue after a short settle delay.
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+                page.wait_for_timeout(1200)
             label = date_filter.capitalize()
             page.get_by_text(label, exact=True).click()
-            page.wait_for_load_state("networkidle")
+            try:
+                page.wait_for_load_state("networkidle", timeout=8000)
+            except Exception:
+                page.wait_for_load_state("domcontentloaded", timeout=8000)
+                page.wait_for_timeout(1200)
 
             links = page.locator('a[href*="/fixture/"]').all()
             seen = set()
@@ -277,6 +293,19 @@ def _internal_to_preferred_keys(stats: list[str] | None) -> list[str]:
     return keys
 
 
+def _ask_lineup_positions(team_name: str) -> list[str]:
+    supported_lineups = ", ".join(sorted(LINEUP_POSITIONS.keys()))
+    while True:
+        raw = questionary.text(f"Confirmed lineup for {team_name}:").ask()
+        parsed = get_lineup_positions(raw or "")
+        if parsed:
+            return parsed
+        questionary.print(
+            "We don't have that lineup yet. Please use one of: " + supported_lineups,
+            style="fg:#ff5f5f bold",
+        )
+
+
 def main() -> None:
     args = _parse_args()
     if not sys.stdin.isatty() and not args.non_interactive:
@@ -292,6 +321,9 @@ def main() -> None:
         stats = _parse_stats_arg(args.stats)
         min_average = args.min_average
         headless = args.headless
+        has_confirmed_lineups = False
+        confirmed_home_lineup_positions = None
+        confirmed_away_lineup_positions = None
     else:
         date_choice = questionary.select(
             "Match date:",
@@ -301,6 +333,15 @@ def main() -> None:
             ],
             default=prefs.get("date", "today"),
         ).ask()
+        has_confirmed_lineups = questionary.confirm(
+            "Do you have confirmed lineups?",
+            default=False,
+        ).ask()
+        confirmed_home_lineup_positions = None
+        confirmed_away_lineup_positions = None
+        if has_confirmed_lineups:
+            confirmed_home_lineup_positions = _ask_lineup_positions("Home Team")
+            confirmed_away_lineup_positions = _ask_lineup_positions("Away Team")
 
         stats = _choose_stats(prefs.get("stats"))
         min_average_raw = questionary.text(
@@ -499,6 +540,8 @@ def main() -> None:
             headless=headless,
             output=out_path,
             output_both=out_both,
+            home_lineup_positions=confirmed_home_lineup_positions,
+            away_lineup_positions=confirmed_away_lineup_positions,
             verbose=False,
         )
     return

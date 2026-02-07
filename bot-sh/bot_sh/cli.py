@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+from typing import Any
 
 from . import scraper
 from .models import (
@@ -12,6 +13,10 @@ from .models import (
     STAT_DISPLAY_NAMES,
 )
 from .outputs import derive_alt_output_path, save_results
+
+ANSI_RESET = "\033[0m"
+ANSI_GREEN = "\033[32m"
+ANSI_RED = "\033[31m"
 
 
 def parse_args(argv: list[str] | None = None):
@@ -133,6 +138,19 @@ def _stat_display_name(stat_type: str) -> str:
     return STAT_DISPLAY_NAMES.get(stat_type, stat_type)
 
 
+def _swap_to_opponent_team_view(
+    all_collected_data: dict,
+    home_team_display: str,
+    away_team_display: str,
+) -> dict:
+    if home_team_display not in all_collected_data or away_team_display not in all_collected_data:
+        return all_collected_data
+    return {
+        home_team_display: all_collected_data.get(away_team_display, {}),
+        away_team_display: all_collected_data.get(home_team_display, {}),
+    }
+
+
 def run_single(
     min_average: float = 1.0,
     debug: bool = False,
@@ -187,6 +205,9 @@ def run_single(
                 home_team_display = home_team_name.replace(" Deportivo", "").replace(
                     " Real Sociedad", ""
                 )
+                away_team_display = away_team_name.replace(" Deportivo", "").replace(
+                    " Real Sociedad", ""
+                )
                 if verbose:
                     print(
                         f"📏  Collecting {stat_display} for {home_team_display}...\n"
@@ -219,9 +240,6 @@ def run_single(
                     )
                 page.get_by_label("Stat").select_option(stat_type)
 
-                away_team_display = away_team_name.replace(" Deportivo", "").replace(
-                    " Real Sociedad", ""
-                )
                 if verbose:
                     print(
                         f"\n🏟️  Collecting {stat_display} for {away_team_display}...\n"
@@ -251,6 +269,11 @@ def run_single(
                     except Exception:
                         page.wait_for_timeout(1000)
 
+            all_collected_data = _swap_to_opponent_team_view(
+                all_collected_data,
+                home_team_display,
+                away_team_display,
+            )
             _print_summary(all_collected_data, min_average)
 
             if verbose:
@@ -286,6 +309,8 @@ def run_single_by_url(
     headless: bool = False,
     output: str | None = None,
     output_both: bool = False,
+    home_lineup_positions: list[str] | None = None,
+    away_lineup_positions: list[str] | None = None,
     verbose: bool = True,
 ) -> None:
     from playwright.sync_api import sync_playwright
@@ -314,7 +339,25 @@ def run_single_by_url(
                 print("❌ No data collected.")
                 return
 
-            _print_summary(all_collected_data, min_average)
+            home_team_display = home_team_tab.title()
+            away_team_display = away_team_tab.title()
+            all_collected_data = _swap_to_opponent_team_view(
+                all_collected_data,
+                home_team_display,
+                away_team_display,
+            )
+            summary_filters = None
+            if home_lineup_positions or away_lineup_positions:
+                summary_filters = {
+                    home_team_display: set(away_lineup_positions or []),
+                    away_team_display: set(home_lineup_positions or []),
+                }
+            _print_summary(
+                all_collected_data,
+                min_average,
+                allowed_positions_by_team=summary_filters,
+                colorize_threshold=bool(summary_filters),
+            )
             if verbose:
                 print("\n✅ Flow replication completed successfully!")
 
@@ -426,6 +469,8 @@ def _collect_match_stats(
     all_collected_data = {}
 
     scraper.navigate_to_match_by_url(page, match_url, verbose=verbose)
+    home_team_display = home_team_tab.title()
+    away_team_display = away_team_tab.title()
 
     for stat_type in stats:
         stat_display = _stat_display_name(stat_type)
@@ -437,7 +482,6 @@ def _collect_match_stats(
             page, home_team_tab, stat_type, stat_display, verbose=verbose
         )
 
-        home_team_display = home_team_tab.title()
         if home_team_display not in all_collected_data:
             all_collected_data[home_team_display] = {}
         all_collected_data[home_team_display][stat_display] = (
@@ -463,7 +507,6 @@ def _collect_match_stats(
 
         page.get_by_label("Stat").select_option(stat_type)
 
-        away_team_display = away_team_tab.title()
         if away_team_display not in all_collected_data:
             all_collected_data[away_team_display] = {}
         all_collected_data[away_team_display][stat_display] = (
@@ -491,39 +534,72 @@ def _collect_match_stats(
     return all_collected_data
 
 
-def _print_summary(all_collected_data: dict, min_average: float) -> None:
+def _to_float_or_zero(value: Any) -> float:
+    try:
+        if value is None or value == "":
+            return 0.0
+        return float(value)
+    except Exception:
+        return 0.0
+
+
+def _print_summary(
+    all_collected_data: dict,
+    min_average: float,
+    allowed_positions_by_team: dict[str, set[str]] | None = None,
+    colorize_threshold: bool = False,
+) -> None:
     print("\n" + "=" * 80)
-    print(
-        "📊 COLLECTED STATS SUMMARY (filtered by min-average >= {})".format(
-            min_average
+    if colorize_threshold:
+        print(
+            "📊 COLLECTED STATS SUMMARY (confirmed lineups only; min-average color threshold = {})".format(
+                min_average
+            )
         )
-    )
+    else:
+        print(
+            "📊 COLLECTED STATS SUMMARY (filtered by min-average >= {})".format(
+                min_average
+            )
+        )
     print("=" * 80)
     for team, stats_dict in all_collected_data.items():
         print(f"\n🏟️  {team}:")
+        allowed_positions = None
+        if allowed_positions_by_team:
+            allowed_positions = allowed_positions_by_team.get(team)
         for stat_name, stat_positions in stats_dict.items():
             print(f"\n   📈 {stat_name}:")
             filtered = []
             for pos in stat_positions:
-                avg_raw = pos.get("average")
-                try:
-                    avg_val = (
-                        float(avg_raw)
-                        if (avg_raw is not None and avg_raw != "")
-                        else None
-                    )
-                except Exception:
-                    avg_val = None
-                if avg_val is not None and avg_val >= float(min_average):
-                    filtered.append(pos)
+                position_name = pos.get("position", "")
+                if allowed_positions is not None and position_name not in allowed_positions:
+                    continue
+
+                total_val = _to_float_or_zero(pos.get("total"))
+                avg_val = _to_float_or_zero(pos.get("average"))
+                high_val = _to_float_or_zero(pos.get("highest"))
+                normalized = {
+                    "position": position_name,
+                    "total": total_val,
+                    "average": avg_val,
+                    "highest": high_val,
+                }
+                if colorize_threshold:
+                    filtered.append(normalized)
+                elif avg_val >= float(min_average):
+                    filtered.append(normalized)
 
             filtered.sort(
-                key=lambda p: float(p.get("average") or 0),
+                key=lambda p: p.get("average", 0.0),
                 reverse=True,
             )
 
             if not filtered:
-                print(f"   No positions with average >= {min_average}.")
+                if colorize_threshold and allowed_positions is not None:
+                    print("   No positions from confirmed lineup.")
+                else:
+                    print(f"   No positions with average >= {min_average}.")
                 continue
 
             print(
@@ -531,15 +607,31 @@ def _print_summary(all_collected_data: dict, min_average: float) -> None:
             )
             print("   " + "-" * 50)
             for pos in filtered:
-                total = pos.get("total") if pos.get("total") is not None else ""
-                avg = pos.get("average") if pos.get("average") is not None else ""
-                high = pos.get("highest") if pos.get("highest") is not None else ""
-                if pos.get("no_data"):
-                    total_display = f"{total} (no data)"
+                total_display = (
+                    str(int(pos["total"])) if pos["total"].is_integer() else f"{pos['total']:.2f}"
+                )
+                avg_display = (
+                    str(int(pos["average"]))
+                    if pos["average"].is_integer()
+                    else f"{pos['average']:.2f}"
+                )
+                high_display = (
+                    str(int(pos["highest"]))
+                    if pos["highest"].is_integer()
+                    else f"{pos['highest']:.2f}"
+                )
+
+                if colorize_threshold:
+                    color = (
+                        ANSI_GREEN
+                        if pos["average"] >= float(min_average)
+                        else ANSI_RED
+                    )
+                    avg_cell = f"{color}{avg_display:<10}{ANSI_RESET}"
                 else:
-                    total_display = f"{total}"
+                    avg_cell = f"{avg_display:<10}"
                 print(
-                    f"   {pos['position']:<12} {total_display:<15} {avg:<10} {high:<10}"
+                    f"   {pos['position']:<12} {total_display:<15} {avg_cell} {high_display:<10}"
                 )
 
 
