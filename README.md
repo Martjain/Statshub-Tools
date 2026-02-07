@@ -36,23 +36,6 @@ A Python-based Playwright automation tool for collecting per-position opponent f
    playwright install
    ```
 
-## Project Structure
-
-```
-bot-sh/
-├── codegen.py              # CLI wrapper (parses arguments and invokes bot_sh.cli)
-├── interactive.py          # Rich interactive CLI
-├── batch_collector.py      # Batch runner (team_tabs.json)
-├── batch_simple.py         # Config-based batch runner (matches.json)
-├── bot_sh/
-│   ├── __init__.py         # Package init
-│   ├── cli.py              # CLI parsing and orchestration
-│   ├── scraper.py          # Playwright navigation and extraction
-│   ├── outputs.py          # JSON/CSV writers and helpers
-│   ├── models.py           # Constants and mappings
-└── venv/                   # Virtual environment
-```
-
 ## Usage
 
 ### Basic Example
